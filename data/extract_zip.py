@@ -1,7 +1,6 @@
 import zipfile
 import os
 
-
 def extract_zip(zip_path, extract_to=None):
     os.makedirs(extract_to, exist_ok=True)
     with zipfile.ZipFile(zip_path, 'r') as zip_ref:
@@ -22,8 +21,6 @@ def process_directory(directory):
 
 if __name__ == "__main__":
     types = ["sitting-down", "standing-up", "walking", "running", "climbing-stairs"]
-    for type in types:
-        directory = f"data/{type}"
+    for typee in types:
+        directorytory = typee
         process_directory(directory)
-
-
