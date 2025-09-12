@@ -25,6 +25,8 @@ PARENT_FOLDERS = [
     "walking",
     "sitting-down",
     "standing-up",
+    "running",
+    "Still"
 ]
 
 # Required sensor files and their output prefixes

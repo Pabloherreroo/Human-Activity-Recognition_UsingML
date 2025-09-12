@@ -6,7 +6,6 @@ def extract_zip(zip_path, extract_to=None):
     with zipfile.ZipFile(zip_path, 'r') as zip_ref:
         zip_ref.extractall(extract_to)
         print(f"Extracted all files to: {extract_to}")
-    print(f"Extracted all files to: {extract_to}")
 
 def process_directory(directory):
     extract_to = directory
@@ -20,7 +19,7 @@ def process_directory(directory):
 
 
 if __name__ == "__main__":
-    types = ["sitting-down", "standing-up", "walking", "running", "climbing-stairs"]
+    types = ["sitting-down", "standing-up", "walking", "running", "climbing-stairs", "Still"]
     for typee in types:
-        directorytory = typee
+        directory = typee
         process_directory(directory)
