@@ -210,20 +210,44 @@ def merge_aggregated_csvs(data_dir, output_file):
     
     return merged_df
 
-def run_processing(data_dir: str, output_file: str):
+def run_processing(
+    data_dir: str,
+    output_file: str,
+    extract: bool = True,
+    aggregate: bool = True,
+    merge: bool = True,
+):
     """Main function to run the complete data processing pipeline."""
     print(f"Starting data processing in: {data_dir}")
 
-    # Step 1: Extract zip files
-    extracted_dirs = process_directory(data_dir)
+    extracted_dirs = []
+    if extract:
+        # Step 1: Extract zip files
+        print("--- Running: Step 1: Extract zip files ---")
+        extracted_dirs = process_directory(data_dir)
+        print("--- Finished: Step 1 ---")
 
-    # Step 2: Aggregate sensor data
-    if extracted_dirs:
-        aggregate_all(extracted_dirs)
-    else:
-        print("No zip files found to process.")
+    if aggregate:
+        # Step 2: Aggregate sensor data
+        print("--- Running: Step 2: Aggregate sensor data ---")
+        # If extraction was skipped, we need to find the directories to aggregate
+        if not extracted_dirs:
+            extracted_dirs = [
+                os.path.join(data_dir, d.name)
+                for d in os.scandir(data_dir)
+                if d.is_dir()
+            ]
 
-    # Step 3: Merge aggregated CSVs
-    merge_aggregated_csvs(data_dir, output_file)
+        if extracted_dirs:
+            aggregate_all(extracted_dirs)
+        else:
+            print("No directories found to process for aggregation.")
+        print("--- Finished: Step 2 ---")
+
+    if merge:
+        # Step 3: Merge aggregated CSVs
+        print("--- Running: Step 3: Merge aggregated CSVs ---")
+        merge_aggregated_csvs(data_dir, output_file)
+        print("--- Finished: Step 3 ---")
 
     print("Data processing pipeline finished.")

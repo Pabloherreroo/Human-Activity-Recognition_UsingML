@@ -1,3 +1,4 @@
+import argparse
 from data_processing import run_processing
 
 def train_model():
@@ -15,8 +16,22 @@ if __name__ == '__main__':
     DATA_DIR = 'data'
     OUTPUT_FILE = 'data/merged_data.csv'
 
-    # Run the data processing pipeline
-    run_processing(DATA_DIR, OUTPUT_FILE)
+    # Set up argument parser
+    parser = argparse.ArgumentParser(description="Run parts of the data processing pipeline.")
+    parser.add_argument('--no-extract', dest='extract', action='store_false', help='Skip the extraction step.')
+    parser.add_argument('--no-aggregate', dest='aggregate', action='store_false', help='Skip the aggregation step.')
+    parser.add_argument('--no-merge', dest='merge', action='store_false', help='Skip the merging step.')
+    parser.set_defaults(extract=True, aggregate=True, merge=True)
+    args = parser.parse_args()
+
+    # Run the data processing pipeline based on arguments
+    run_processing(
+        DATA_DIR,
+        OUTPUT_FILE,
+        extract=args.extract,
+        aggregate=args.aggregate,
+        merge=args.merge
+    )
 
     # Train the model
     train_model()
