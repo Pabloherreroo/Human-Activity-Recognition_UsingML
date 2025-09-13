@@ -1,3 +1,7 @@
 dash
 plotly
 flask
+pandas
+matplotlib
+numpy
+tkinter

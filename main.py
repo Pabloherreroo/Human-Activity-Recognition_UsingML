@@ -1,5 +1,5 @@
 import argparse
-from data_processing import run_processing
+from src.data_processing import run_processing
 
 def train_model():
     # Placeholder for model training
