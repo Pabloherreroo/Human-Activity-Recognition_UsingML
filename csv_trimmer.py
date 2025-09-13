@@ -10,7 +10,7 @@ import os
 class CSVTrimmer:
     def __init__(self, root):
         self.root = root
-        self.root.title("CSV Visual Trimmer")
+        self.root.title("CSV Visual Trimmer & Labeler")
         self.root.geometry("1200x800")
         
         # Data variables
@@ -19,6 +19,10 @@ class CSVTrimmer:
         self.selected_column = None
         self.crop_start = None
         self.crop_end = None
+        
+        # Label variables
+        self.labels = {}  # Dictionary to store labels for time segments {(start, end): label}
+        self.label_colors = {}  # Dictionary to store colors for each label
         
         # Create GUI
         self.create_widgets()
@@ -67,7 +71,7 @@ class CSVTrimmer:
         self.canvas.get_tk_widget().grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
         
         # Control frame
-        control_frame = ttk.LabelFrame(main_frame, text="Trimming Controls", padding="5")
+        control_frame = ttk.LabelFrame(main_frame, text="Trimming & Labeling Controls", padding="5")
         control_frame.grid(row=3, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(0, 10))
         
         # Crop range display
@@ -88,7 +92,22 @@ class CSVTrimmer:
         
         ttk.Button(control_frame, text="Set Range", command=self.set_manual_range).grid(row=0, column=6, padx=(0, 10))
         ttk.Button(control_frame, text="Clear Selection", command=self.clear_selection).grid(row=0, column=7, padx=(0, 10))
-        ttk.Button(control_frame, text="Crop & Save", command=self.crop_and_save).grid(row=0, column=8)
+        ttk.Button(control_frame, text="Crop & Save", command=self.crop_and_save).grid(row=0, column=8, padx=(0, 10))
+        ttk.Button(control_frame, text="Save with Labels", command=self.save_with_labels).grid(row=0, column=9)
+        
+        # Labeling controls (second row)
+        ttk.Label(control_frame, text="Label:").grid(row=1, column=0, padx=(0, 10), pady=(10, 0))
+        self.label_var = tk.StringVar()
+        self.label_entry = ttk.Entry(control_frame, textvariable=self.label_var, width=15)
+        self.label_entry.grid(row=1, column=1, padx=(0, 10), pady=(10, 0))
+        
+        ttk.Button(control_frame, text="Add Label", command=self.add_label).grid(row=1, column=2, padx=(0, 10), pady=(10, 0))
+        ttk.Button(control_frame, text="Remove Label", command=self.remove_label).grid(row=1, column=3, padx=(0, 10), pady=(10, 0))
+        ttk.Button(control_frame, text="Clear All Labels", command=self.clear_all_labels).grid(row=1, column=4, padx=(0, 10), pady=(10, 0))
+        
+        # Labels display
+        self.labels_display = ttk.Label(control_frame, text="No labels added")
+        self.labels_display.grid(row=1, column=5, columnspan=4, padx=(20, 0), pady=(10, 0), sticky=(tk.W,))
         
         # Status frame
         status_frame = ttk.Frame(main_frame)
@@ -135,10 +154,17 @@ class CSVTrimmer:
                 self.ax.clear()
                 self.canvas.draw()
                 
-                # Reset crop range
+                # Initialize label column if it doesn't exist
+                if 'label' not in self.df.columns:
+                    self.df['label'] = 'unlabeled'
+                
+                # Reset crop range and labels
                 self.crop_start = None
                 self.crop_end = None
+                self.labels.clear()
+                self.label_colors.clear()
                 self.update_range_display()
+                self.update_labels_display()
                 
                 self.status_label.config(text=f"Loaded {len(self.df)} rows from {os.path.basename(file_path)}")
                 
@@ -167,7 +193,24 @@ class CSVTrimmer:
             x_data = self.df['seconds_elapsed']
             y_data = self.df[self.selected_column]
             
+            # Plot the main data
             self.ax.plot(x_data, y_data, 'b-', linewidth=1, alpha=0.8)
+            
+            # Highlight labeled segments
+            for (start, end), label in self.labels.items():
+                # Find data points within this segment
+                segment_mask = (x_data >= start) & (x_data <= end)
+                if segment_mask.any():
+                    color = self.label_colors.get(label, 'red')
+                    self.ax.axvspan(start, end, alpha=0.3, color=color, label=f'{label}')
+            
+            # Add legend if there are labels
+            if self.labels:
+                handles, labels = self.ax.get_legend_handles_labels()
+                # Remove duplicate labels
+                by_label = dict(zip(labels, handles))
+                self.ax.legend(by_label.values(), by_label.keys(), loc='upper right')
+            
             self.ax.set_xlabel('Seconds Elapsed')
             self.ax.set_ylabel(self.selected_column)
             self.ax.set_title(f'{self.selected_column} vs Time')
@@ -228,6 +271,105 @@ class CSVTrimmer:
                 
         except ValueError:
             messagebox.showerror("Error", "Please enter valid numeric values")
+    
+    def add_label(self):
+        """Add label to the selected time range"""
+        if self.crop_start is None or self.crop_end is None:
+            messagebox.showwarning("Warning", "Please select a time range first")
+            return
+            
+        label = self.label_var.get().strip()
+        if not label:
+            messagebox.showwarning("Warning", "Please enter a label")
+            return
+            
+        # Store the label for this time segment
+        segment_key = (self.crop_start, self.crop_end)
+        self.labels[segment_key] = label
+        
+        # Assign a color to this label if it doesn't have one
+        if label not in self.label_colors:
+            # Generate a color for this label
+            import random
+            colors = ['red', 'blue', 'green', 'orange', 'purple', 'brown', 'pink', 'gray', 'olive', 'cyan']
+            used_colors = set(self.label_colors.values())
+            available_colors = [c for c in colors if c not in used_colors]
+            if available_colors:
+                self.label_colors[label] = available_colors[0]
+            else:
+                # Generate random color if all predefined colors are used
+                self.label_colors[label] = f"#{random.randint(0,255):02x}{random.randint(0,255):02x}{random.randint(0,255):02x}"
+        
+        # Clear the label entry
+        self.label_var.set('')
+        
+        # Update display and replot
+        self.update_labels_display()
+        if self.selected_column:
+            self.plot_data()
+            
+        self.status_label.config(text=f"Added label '{label}' to range {self.crop_start:.3f}s - {self.crop_end:.3f}s")
+    
+    def remove_label(self):
+        """Remove label from the selected time range"""
+        if self.crop_start is None or self.crop_end is None:
+            messagebox.showwarning("Warning", "Please select a time range first")
+            return
+            
+        segment_key = (self.crop_start, self.crop_end)
+        if segment_key in self.labels:
+            removed_label = self.labels[segment_key]
+            del self.labels[segment_key]
+            
+            # Remove color if no other segments use this label
+            if removed_label not in self.labels.values():
+                self.label_colors.pop(removed_label, None)
+                
+            self.update_labels_display()
+            if self.selected_column:
+                self.plot_data()
+                
+            self.status_label.config(text=f"Removed label '{removed_label}' from range {self.crop_start:.3f}s - {self.crop_end:.3f}s")
+        else:
+            messagebox.showinfo("Info", "No label found for the selected range")
+    
+    def clear_all_labels(self):
+        """Clear all labels"""
+        if not self.labels:
+            messagebox.showinfo("Info", "No labels to clear")
+            return
+            
+        result = messagebox.askyesno("Confirm", "Are you sure you want to clear all labels?")
+        if result:
+            self.labels.clear()
+            self.label_colors.clear()
+            self.update_labels_display()
+            if self.selected_column:
+                self.plot_data()
+            self.status_label.config(text="All labels cleared")
+    
+    def populate_label_column(self):
+        """Populate the label column in the dataframe based on stored labels"""
+        if self.df is None:
+            return
+            
+        # Reset all labels to 'unlabeled'
+        self.df['label'] = 'unlabeled'
+        
+        # Apply labels to corresponding time segments
+        for (start, end), label in self.labels.items():
+            mask = (self.df['seconds_elapsed'] >= start) & (self.df['seconds_elapsed'] <= end)
+            self.df.loc[mask, 'label'] = label
+     
+    def update_labels_display(self):
+        """Update the labels display"""
+        if not self.labels:
+            self.labels_display.config(text="No labels added")
+        else:
+            label_text = ", ".join([f"{label} ({start:.1f}-{end:.1f}s)" for (start, end), label in self.labels.items()])
+            if len(label_text) > 80:
+                label_text = label_text[:77] + "..."
+            self.labels_display.config(text=label_text)
             
     def clear_selection(self):
         """Clear crop range selection"""
@@ -255,7 +397,30 @@ class CSVTrimmer:
         if self.df is None:
             messagebox.showwarning("Warning", "Please load a CSV file first")
             return
+        
+        # Populate label column with all labels
+        self.populate_label_column()
+        
+        # If there are labels but no specific crop range selected, save all data with labels
+        if self.labels and (self.crop_start is None or self.crop_end is None):
+            result = messagebox.askyesno(
+                "Save with Labels", 
+                f"No specific range selected, but labels are present.\n"
+                f"Do you want to save the entire dataset with all labels applied?\n\n"
+                f"File will have {len(self.df)} rows with label information."
+            )
             
+            if result:
+                try:
+                    # Save entire dataframe with labels
+                    self.df.to_csv(self.current_file, index=False)
+                    self.status_label.config(text=f"File saved successfully with labels. {len(self.df)} rows saved.")
+                    messagebox.showinfo("Success", "File has been saved with all labels applied!")
+                except Exception as e:
+                    messagebox.showerror("Error", f"Failed to save file: {str(e)}")
+            return
+            
+        # Original cropping behavior when a specific range is selected
         if self.crop_start is None or self.crop_end is None:
             messagebox.showwarning("Warning", "Please select a time range to crop")
             return
@@ -275,7 +440,7 @@ class CSVTrimmer:
             
             # Confirm save operation
             result = messagebox.askyesno(
-                "Confirm Save", 
+                "Confirm Crop & Save", 
                 f"This will overwrite the original file with {len(cropped_df)} rows.\n"
                 f"Original file had {len(self.df)} rows.\n\n"
                 f"Do you want to continue?"
@@ -288,15 +453,52 @@ class CSVTrimmer:
                 # Update current dataframe
                 self.df = cropped_df
                 
-                # Clear selection
+                # Clear selection and labels (since we cropped)
                 self.clear_selection()
+                self.labels.clear()
+                self.label_colors.clear()
+                self.update_labels_display()
                 
                 # Replot if a column was selected
                 if self.selected_column:
                     self.plot_data()
                     
-                self.status_label.config(text=f"File saved successfully. {len(cropped_df)} rows remaining.")
+                self.status_label.config(text=f"File cropped and saved successfully. {len(cropped_df)} rows remaining.")
                 messagebox.showinfo("Success", "File has been cropped and saved successfully!")
+                
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to save file: {str(e)}")
+    
+    def save_with_labels(self):
+        """Save the entire dataset with all labels applied"""
+        if self.df is None:
+            messagebox.showwarning("Warning", "Please load a CSV file first")
+            return
+        
+        if not self.labels:
+            messagebox.showwarning("Warning", "No labels have been added. Please add labels before saving.")
+            return
+        
+        try:
+            # Populate label column with all labels
+            self.populate_label_column()
+            
+            # Show summary of labels
+            label_summary = "\n".join([f"• {label}: {start:.1f}s - {end:.1f}s" for (start, end), label in self.labels.items()])
+            
+            result = messagebox.askyesno(
+                "Save with Labels", 
+                f"Save the entire dataset with the following labels applied?\n\n"
+                f"{label_summary}\n\n"
+                f"Total rows: {len(self.df)}\n"
+                f"This will overwrite the original file."
+            )
+            
+            if result:
+                # Save entire dataframe with labels
+                self.df.to_csv(self.current_file, index=False)
+                self.status_label.config(text=f"File saved successfully with {len(self.labels)} labels applied. {len(self.df)} rows saved.")
+                messagebox.showinfo("Success", "File has been saved with all labels applied!")
                 
         except Exception as e:
             messagebox.showerror("Error", f"Failed to save file: {str(e)}")
