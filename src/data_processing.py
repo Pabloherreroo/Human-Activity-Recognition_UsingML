@@ -4,6 +4,7 @@ import sys
 import pandas as pd
 from typing import Dict, Tuple, List
 from pathlib import Path
+import shutil
 
 def extract_zip(zip_path, extract_to=None):
     os.makedirs(extract_to, exist_ok=True)
@@ -11,16 +12,17 @@ def extract_zip(zip_path, extract_to=None):
         zip_ref.extractall(extract_to)
         print(f"Extracted all files to: {extract_to}")
 
-def process_directory(directory) -> List[str]:
+def process_directory(root_dir: str) -> List[str]:
+    """Recursively finds and extracts all zip files in a directory."""
     extracted_dirs = []
-    extract_to = directory
-    with os.scandir(directory) as entries:
-        files = [entry.name for entry in entries if entry.is_file()]
-        for file in files:
-            if file.endswith(".zip"):
-                extract_to = os.path.join(directory, file[:-4])
-                extract_zip(os.path.join(directory, file), extract_to)
-                os.remove(os.path.join(directory, file))
+    for dirpath, _, filenames in os.walk(root_dir):
+        for filename in filenames:
+            if filename.endswith(".zip"):
+                zip_path = os.path.join(dirpath, filename)
+                # Extract to a folder with the same name as the zip file, in the same directory.
+                extract_to = os.path.join(dirpath, filename[:-4])
+                extract_zip(zip_path, extract_to)
+                os.remove(zip_path)
                 extracted_dirs.append(extract_to)
     return extracted_dirs
 
@@ -57,7 +59,7 @@ def read_and_prepare(csv_path: str, prefix: str) -> Tuple[pd.DataFrame, Tuple[st
     return df_5, common_cols
 
 
-def process_second_level_folder(folder_path: str) -> bool:
+def process_second_level_folder(folder_path: str, output_dir: str) -> bool:
     """Process a single second-level folder. Returns True if Aggregated.csv was written."""
 
     available = {name: os.path.join(folder_path, name) for name in SENSOR_FILES}
@@ -110,30 +112,26 @@ def process_second_level_folder(folder_path: str) -> bool:
     )
     merged = merged[final_cols]
 
-    out_path = os.path.join(folder_path, "Aggregated.csv")
+    out_path = os.path.join(output_dir, "Aggregated.csv")
     merged.to_csv(out_path, index=False)
     print(f"Saved: {out_path} (rows={len(merged)})")
     return True
 
 
-def aggregate_all(parent_folders: List[str]) -> None:
-    """Walk each parent folder and process its immediate subfolders only."""
+def aggregate_folders(folders_to_process: List[str]) -> None:
+    """Process a list of folders to create Aggregated.csv in each."""
     total_written = 0
-    for parent in parent_folders:
-        if not os.path.isdir(parent):
-            print(f"Parent folder not found: {parent}")
+    for folder_path in folders_to_process:
+        if not os.path.isdir(folder_path):
+            print(f"Folder not found: {folder_path}")
             continue
-
-        with os.scandir(parent) as it:
-            for entry in it:
-                if entry.is_dir():
-                    try:
-                        if process_second_level_folder(entry.path):
-                            total_written += 1
-                    except Exception as e:
-                        print(f"ERROR in {entry.path}: {e}")
-
-    print(f"Done. Aggregated.csv written for {total_written} subfolder(s).")
+        try:
+            output_dir = os.path.dirname(folder_path)
+            if process_second_level_folder(folder_path, output_dir):
+                total_written += 1
+        except Exception as e:
+            print(f"ERROR in {folder_path}: {e}")
+    print(f"Done. Aggregated.csv written for {total_written} folder(s).")
 
 def merge_aggregated_csvs(data_dir, output_file):
     """
@@ -230,16 +228,23 @@ def run_processing(
     if aggregate:
         # Step 2: Aggregate sensor data
         print("--- Running: Step 2: Aggregate sensor data ---")
-        # If extraction was skipped, we need to find the directories to aggregate
-        if not extracted_dirs:
-            extracted_dirs = [
-                os.path.join(data_dir, d.name)
-                for d in os.scandir(data_dir)
-                if d.is_dir()
-            ]
-
+        
+        folders_to_process = []
         if extracted_dirs:
-            aggregate_all(extracted_dirs)
+            # If extraction just ran, the returned dirs are the ones to process.
+            folders_to_process = extracted_dirs
+        else:
+            # If extraction was skipped, find all second-level subdirectories.
+            print("Searching for directories with raw sensor data...")
+            for entry in os.scandir(data_dir):
+                if entry.is_dir():
+                    # Look for subdirectories inside the activity folder
+                    for sub_entry in os.scandir(entry.path):
+                        if sub_entry.is_dir():
+                            folders_to_process.append(sub_entry.path)
+
+        if folders_to_process:
+            aggregate_folders(folders_to_process)
         else:
             print("No directories found to process for aggregation.")
         print("--- Finished: Step 2 ---")
@@ -249,5 +254,17 @@ def run_processing(
         print("--- Running: Step 3: Merge aggregated CSVs ---")
         merge_aggregated_csvs(data_dir, output_file)
         print("--- Finished: Step 3 ---")
+        
+        if extracted_dirs:
+            print("--- Running: Cleanup of extracted folders ---")
+            for folder_to_delete in extracted_dirs:
+                try:
+                    if os.path.isdir(folder_to_delete):
+                        shutil.rmtree(folder_to_delete)
+                        print(f"Deleted folder: {folder_to_delete}")
+                except Exception as e:
+                    print(f"Error deleting folder {folder_to_delete}: {e}")
+            print("--- Finished: Cleanup ---")
+
 
     print("Data processing pipeline finished.")

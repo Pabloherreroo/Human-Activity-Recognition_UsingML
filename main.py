@@ -18,24 +18,33 @@ if __name__ == '__main__':
 
     # Set up argument parser
     parser = argparse.ArgumentParser(description="Run parts of the data processing pipeline.")
-    parser.add_argument('--no-extract', dest='extract', action='store_false', help='Skip the extraction step.')
-    parser.add_argument('--no-aggregate', dest='aggregate', action='store_false', help='Skip the aggregation step.')
-    parser.add_argument('--no-merge', dest='merge', action='store_false', help='Skip the merging step.')
-    parser.set_defaults(extract=True, aggregate=True, merge=True)
+    parser.add_argument('--mode', type=str, choices=['extract_and_merge', 'full'], required=True, help='The mode to run the processing in.')
     args = parser.parse_args()
 
+    # Set processing flags based on mode
+    if args.mode == 'extract_and_merge':
+        extract = True
+        aggregate = True
+        merge = False
+    elif args.mode == 'full':
+        extract = False
+        aggregate = False
+        merge = True
+    
     # Run the data processing pipeline based on arguments
     run_processing(
         DATA_DIR,
         OUTPUT_FILE,
-        extract=args.extract,
-        aggregate=args.aggregate,
-        merge=args.merge
+        extract=extract,
+        aggregate=aggregate,
+        merge=merge
     )
 
-    # Train the model
-    train_model()
+    # In 'full' mode, also run model training and evaluation
+    if args.mode == 'full':
+        # Train the model
+        train_model()
 
-    # Evaluate the model
-    evaluate_model()
+        # Evaluate the model
+        evaluate_model()
 
