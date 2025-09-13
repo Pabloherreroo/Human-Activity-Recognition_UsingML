@@ -1,15 +1,15 @@
 import argparse
 from src.data_processing import run_processing
+from src.training import run_training
 
 def train_model():
-    # Placeholder for model training
+    # Backward-compat shim: direct to run_training with defaults
     print("Training model...")
-    pass
+    run_training(data_path='data/merged_data.csv')
 
 def evaluate_model():
-    # Placeholder for model evaluation
+    # Kept for compatibility; evaluation happens inside run_training
     print("Evaluating model...")
-    pass
 
 if __name__ == '__main__':
     # Define paths
@@ -17,8 +17,8 @@ if __name__ == '__main__':
     OUTPUT_FILE = 'data/merged_data.csv'
 
     # Set up argument parser
-    parser = argparse.ArgumentParser(description="Run parts of the data processing pipeline.")
-    parser.add_argument('--mode', type=str, choices=['extract_and_merge', 'full'], required=True, help='The mode to run the processing in.')
+    parser = argparse.ArgumentParser(description="Run parts of the data processing and training pipeline.")
+    parser.add_argument('--mode', type=str, choices=['extract_and_merge', 'full', 'train'], required=True, help='The mode to run: data steps or training.')
     args = parser.parse_args()
 
     # Set processing flags based on mode
@@ -30,21 +30,22 @@ if __name__ == '__main__':
         extract = False
         aggregate = False
         merge = True
-    
+    else:
+        extract = False
+        aggregate = False
+        merge = False
+
     # Run the data processing pipeline based on arguments
-    run_processing(
-        DATA_DIR,
-        OUTPUT_FILE,
-        extract=extract,
-        aggregate=aggregate,
-        merge=merge
-    )
+    if args.mode in ['extract_and_merge', 'full']:
+        run_processing(
+            DATA_DIR,
+            OUTPUT_FILE,
+            extract=extract,
+            aggregate=aggregate,
+            merge=merge
+        )
 
-    # In 'full' mode, also run model training and evaluation
-    if args.mode == 'full':
-        # Train the model
-        train_model()
-
-        # Evaluate the model
-        evaluate_model()
+    # Training/evaluation
+    if args.mode in ['full', 'train']:
+        run_training(data_path=OUTPUT_FILE)
 
