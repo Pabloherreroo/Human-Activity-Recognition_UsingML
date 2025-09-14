@@ -151,6 +151,7 @@ def merge_aggregated_csvs(data_dir, output_file):
     
     print(f"Found {len(subdirs)} subdirectories in data folder:")
     
+    session_counter = 1
     for subdir in subdirs:
         aggregated_csv = subdir / 'Aggregated.csv'
         
@@ -159,6 +160,10 @@ def merge_aggregated_csvs(data_dir, output_file):
             
             # Read the CSV file
             df = pd.read_csv(aggregated_csv)
+            
+            # Add session_id to track original aggregated.csv source
+            df['session_id'] = session_counter
+            session_counter += 1
             
             # Check if the CSV already has a 'label' column
             if 'label' in df.columns:
