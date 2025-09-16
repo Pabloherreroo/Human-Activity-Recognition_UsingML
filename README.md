@@ -48,7 +48,7 @@ Once you have defined your model, plug it in the training pipeline (`run_pipelin
 python run_pipeline.py
 ```
 
-The current **baseline score** is **14.5%** with the following confusion matrix:
+The current **baseline score** is **14.5%** using **completely random predictions** (see `src/models/baseline.py`). After running the pipeline, if your model scores a higher accuracy on the test set it will be automatically saved under `models/` with its corresponding *confusion matrix* under `results/`:
 
 <p align="center">
   <img src="results/Baseline_2025-09-16_23-19-15.png" width="400">
