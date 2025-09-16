@@ -1,4 +1,4 @@
-from config import DATA_PATH
+from .config import DATA_PATH, WINDOW_SIZE, STEP, TEST_SIZE
 import pandas as pd
 import numpy as np
 import os
@@ -30,7 +30,7 @@ class DataLoader:
         labels = []
 
         # sliding window
-        for i in range(0, len(df) - window_size, step):
+        for i in range(0, len(df) - WINDOW_SIZE, STEP):
             window_features = df.drop('label', axis=1).values[i: i + window_size]
             
             # The label for the window is the mode (most common) label within that window.
@@ -46,7 +46,7 @@ class DataLoader:
         
         return X, y
 
-    def get_data(self, test_size=0.2, window_size=20, step=10):
+    def get_data(self, test_size=TEST_SIZE, window_size=WINDOW_SIZE, step=STEP):
         """
         Processes the loaded data to create non-leaky training and test sets
         with moving windows.
@@ -61,9 +61,10 @@ class DataLoader:
         """
         if self.data is None or self.data.empty:
             print("Data not loaded. Cannot process.")
-            return None, None, None, None, []
+            return None, None, None, None, [], []
 
         labels = self.data['label'].unique()
+        feature_names = self.data.drop('label', axis=1).columns.tolist()
         train_dfs = []
         test_dfs = []
 
@@ -80,23 +81,26 @@ class DataLoader:
         train_df = pd.concat(train_dfs).reset_index(drop=True)
         test_df = pd.concat(test_dfs).reset_index(drop=True)
         
-        print(f"Combined Training Set Shape (before windowing): {train_df.shape}")
-        print(f"Combined Test Set Shape (before windowing): {test_df.shape}")
+        print(f"Training Set Shape (before windowing): {train_df.shape}")
+        print(f"Test Set Shape (before windowing): {test_df.shape}")
 
         # --- Step 2: Create Moving Windows ---
         print("\nCreating moving windows for training and test sets...")
         X_train, y_train = self._create_windows(train_df, window_size, step)
         X_test, y_test = self._create_windows(test_df, window_size, step)
-        
-        return X_train, X_test, y_train, y_test, labels
+        print("Windowing complete")
+        print(f"Training Set Shape (after windowing): {X_train.shape}")
+        print(f"Test Set Shape (after windowing): {X_test.shape}")
+
+        return X_train, X_test, y_train, y_test, labels, feature_names
             
 if __name__ == "__main__":
     try:
         data_loader = DataLoader(DATA_PATH)
-        X_train, X_test, y_train, y_test, labels = data_loader.get_data(
-            test_size=0.2, 
-            window_size=20, 
-            step=10
+        X_train, X_test, y_train, y_test, labels, feature_names = data_loader.get_data(
+            test_size=TEST_SIZE, 
+            window_size=WINDOW_SIZE, 
+            step=STEP
         )
 
         num_windows = len(X_train)
@@ -107,6 +111,7 @@ if __name__ == "__main__":
             print("\n--- Data Loading and Processing Complete ---")
             print(f"Shape of X_train: {X_train.shape}")
             print(f"X_train contains {num_windows} windows, each with {window_size} steps and {num_features} features.")
+            print(f"Feature names: {feature_names}")
 
     except NameError:
         print("\nERROR: 'DATA_PATH' is not defined.")

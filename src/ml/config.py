@@ -1,1 +1,4 @@
 DATA_PATH="data/merged_data.csv"
+WINDOW_SIZE=20
+STEP=10
+TEST_SIZE=0.2
