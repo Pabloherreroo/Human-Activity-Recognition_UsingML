@@ -42,7 +42,7 @@ To get started with model training, you need to define a model that inherits fro
 
 Where `X` is a `np` array with shape (num_windows, window_size, num_features) and `y` is a `np` array with shape (num_windows,)
 
-Once you have defined your model, plug it in the training pipeline (`run_pipeline.py`) using the following command:
+Once you have defined your model, plug it in the training pipeline (`run_pipeline.py`) and run it using the following command:
 
 ```bash
 python run_pipeline.py
