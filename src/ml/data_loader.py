@@ -1,4 +1,4 @@
-from .config import DATA_PATH
+from config import DATA_PATH
 import pandas as pd
 import numpy as np
 import os

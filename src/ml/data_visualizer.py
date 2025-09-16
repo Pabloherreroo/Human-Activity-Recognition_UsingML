@@ -5,8 +5,6 @@ import plotly.express as px
 import pandas as pd
 import numpy as np
 
-# Import the DataLoader we built. We assume the 'config.py' and 'data_loader.py'
-# are in the same directory or accessible via the Python path.
 from data_loader import DataLoader
 from config import DATA_PATH
 
