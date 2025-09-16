@@ -28,7 +28,7 @@ To add a new action type, follow these steps:
 
 ## Model Training
 
-To get started with model training, you need to define a model that inherits from the `BaseModel` class inside the `src/ml/base_model.py` file with the following two core methods to **train the model** and **predict unseen data**:
+To get started with model training, you need to define a model that inherits from the `BaseModel` class inside the `src/ml/base_model.py` file. The model **must** implement the following two core methods:
  
 ```python
     @abstractmethod
