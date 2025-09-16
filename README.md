@@ -1,4 +1,7 @@
-# Human Activity Recognition Using ML
+<p align="center">
+  <img src="images/logo.png" width="400">
+</p>
+---
 This project goal is to accurately predict human activity based on mobile sensor data such as gyroscope, accelerometer and gravity. It consists of a full Data Science pipeline from data acquisition until model inference 
 
 ## Data Processing
