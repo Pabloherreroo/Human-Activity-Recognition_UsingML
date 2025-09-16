@@ -11,8 +11,10 @@ class Baseline(BaseModel):
 
     def fit(self, X, y, labels):
         self.labels = labels
+        self._model = self
         return self
 
     def predict(self, X):
-        prediction = random.choice(self.labels)
-        return np.array([prediction] * len(X))
+        random.seed(42)
+        predictions = [random.choice(self.labels) for _ in range(len(X))]
+        return np.array(predictions)
