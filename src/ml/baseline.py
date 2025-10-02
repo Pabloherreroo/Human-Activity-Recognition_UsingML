@@ -52,6 +52,7 @@ class RandomForest(BaseModel):
         # 2. Initialize and train the model
         # We create the model instance here, inside fit()
         self._model = RandomForestClassifier(random_state=42, **self.kwargs)
+        print("Training model...")
         self._model.fit(X_reshaped, y)
         
         print("Model training complete.")

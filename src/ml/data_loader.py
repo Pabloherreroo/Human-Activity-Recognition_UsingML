@@ -80,7 +80,7 @@ class DataLoader:
         
         return X, y
 
-    def get_data(self, test_size=TEST_SIZE, window_size=WINDOW_SIZE, step=STEP, save_processed=True, load_from_saved=True):
+    def get_data(self, test_size=TEST_SIZE, window_size=WINDOW_SIZE, step=STEP):
         """
         Processes the loaded data to create non-leaky training and test sets
         with moving windows.
@@ -89,31 +89,12 @@ class DataLoader:
             test_size (float): The proportion of the dataset to allocate to the test split for each activity.
             window_size (int): The number of timesteps in one window (e.g., 20 steps = 2 seconds if 0.1s interval).
             step (int): The number of timesteps to slide the window forward.
-            save_processed (bool): Whether to save the processed data to a file.
-            load_from_saved (bool): Whether to load the processed data from a file.
         
         Returns:
             tuple: A tuple containing X_train, X_test, y_train, y_test, and a list of unique labels.
         """
         if test_size is None:
             test_size = TEST_SIZE
-            
-        from .config import TEST_CSV_DATA_PATH
-        is_test_data = os.path.normpath(self.file_path) == os.path.normpath(TEST_CSV_DATA_PATH)
-        prefix = "test_processed" if is_test_data else "processed"
-        filename = f"{prefix}_w{window_size}_s{step}_t{int(test_size*100)}.npz"
-        processed_data_path = os.path.join(PROCESSED_DATA_DIR, filename)
-
-        if load_from_saved and os.path.exists(processed_data_path):
-            print(f"Loading processed data from {processed_data_path}...")
-            with np.load(processed_data_path, allow_pickle=True) as data:
-                X_train = data['X_train']
-                X_test = data['X_test']
-                y_train = data['y_train']
-                y_test = data['y_test']
-                labels = data['labels']
-                feature_names = data['feature_names']
-            return X_train, X_test, y_train, y_test, labels, feature_names
 
         self.load_data()
         if self.data is None or self.data.empty:
@@ -150,12 +131,7 @@ class DataLoader:
         print(f"Training Set Shape (after windowing): {X_train.shape}")
         print(f"Test Set Shape (after windowing): {X_test.shape}")
 
-        if save_processed:
-            print(f"Saving processed data to {processed_data_path}...")
-            np.savez(processed_data_path, 
-                     X_train=X_train, X_test=X_test, 
-                     y_train=y_train, y_test=y_test, 
-                     labels=labels, feature_names=feature_names)
+
 
         return X_train, X_test, y_train, y_test, labels, feature_names
             
