@@ -95,8 +95,12 @@ class DataLoader:
         Returns:
             tuple: A tuple containing X_train, X_test, y_train, y_test, and a list of unique labels.
         """
-        # --- Dynamic Path for Processed Data ---
-        filename = f"processed_w{window_size}_s{step}_t{int(test_size*100)}.npz"
+        # Save data to avoid re-running windowing step
+        # Check if this is test data by comparing file path with TEST_CSV_DATA_PATH
+        from .config import TEST_CSV_DATA_PATH
+        is_test_data = os.path.normpath(self.file_path) == os.path.normpath(TEST_CSV_DATA_PATH)
+        prefix = "test_processed" if is_test_data else "processed"
+        filename = f"{prefix}_w{window_size}_s{step}_t{int(test_size*100)}.npz"
         processed_data_path = os.path.join(PROCESSED_DATA_DIR, filename)
 
         if load_from_saved and os.path.exists(processed_data_path):

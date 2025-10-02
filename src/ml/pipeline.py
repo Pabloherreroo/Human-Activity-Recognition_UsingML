@@ -25,8 +25,8 @@ class Pipeline():
         with open('results/best_accuracy.txt', 'w') as f:
             f.write(str(self.best_accuracy))
 
-    def run_pipeline(self, model_path=None):
-        X_train, X_test, y_train, y_test, labels, _ = self.data_loader.get_data()
+    def run_pipeline(self, model_path=None, test_size=None):
+        X_train, X_test, y_train, y_test, labels, _ = self.data_loader.get_data(test_size=test_size)
         self.labels = labels
         if model_path:
             print(f"Loading model from {model_path}")
