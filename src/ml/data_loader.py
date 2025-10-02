@@ -95,8 +95,9 @@ class DataLoader:
         Returns:
             tuple: A tuple containing X_train, X_test, y_train, y_test, and a list of unique labels.
         """
-        # Save data to avoid re-running windowing step
-        # Check if this is test data by comparing file path with TEST_CSV_DATA_PATH
+        if test_size is None:
+            test_size = TEST_SIZE
+            
         from .config import TEST_CSV_DATA_PATH
         is_test_data = os.path.normpath(self.file_path) == os.path.normpath(TEST_CSV_DATA_PATH)
         prefix = "test_processed" if is_test_data else "processed"
