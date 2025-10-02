@@ -1,7 +1,3 @@
-from .data_loader import DataLoader
-from .baseline import Baseline
-from .config import DATA_PATH
-from ..utils.plot_metrics import plot_confusion_matrix
 from ..utils.metrics import get_accuracy
 from sklearn.metrics import confusion_matrix
 import numpy as np
@@ -29,13 +25,15 @@ class Pipeline():
         with open('results/best_accuracy.txt', 'w') as f:
             f.write(str(self.best_accuracy))
 
-    def load_data(self):
-        self.data_loader.load_data()
-
-    def run_pipeline(self):
-        X_train, X_test, y_train, y_test, labels, feature_names = self.data_loader.get_data()
+    def run_pipeline(self, model_path=None):
+        X_train, X_test, y_train, y_test, labels, _ = self.data_loader.get_data()
         self.labels = labels
-        self.model = self.model.fit(X_train, y_train, labels)
+        if model_path:
+            print(f"Loading model from {model_path}")
+            self.model = self.model.load(model_path)
+        else:
+            print("Fitting new model...")
+            self.model = self.model.fit(X_train, y_train, labels)
         predictions = self.model.predict(X_test)
         cm = confusion_matrix(y_test, predictions)
         accuracy = get_accuracy(cm)

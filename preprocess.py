@@ -1,6 +1,7 @@
 import argparse
 from src.data_processing import run_processing
-from src.ml.config import DATA_PATH, OUTPUT_FILE
+from src.ml.config import PROCESSED_DATA_DIR, OUTPUT_FILE, TEST_PROCESSED_DATA_DIR, TEST_OUTPUT_FILE
+
 
 
 if __name__ == '__main__':
@@ -11,7 +12,7 @@ if __name__ == '__main__':
     run_all = not (args.prepare or args.merge)
 
     run_processing(
-        DATA_PATH,
+        PROCESSED_DATA_DIR,
         OUTPUT_FILE,
         extract=args.prepare or run_all,
         aggregate=args.prepare or run_all,
