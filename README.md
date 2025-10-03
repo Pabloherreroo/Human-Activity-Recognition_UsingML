@@ -51,8 +51,8 @@ Once you have defined your model, plug it in the training pipeline (`run_pipelin
 python run_pipeline.py
 ```
 
-The current **baseline score** is **14.5%** using **completely random predictions** (see `src/models/baseline.py`). After running the pipeline, if your model scores a higher accuracy on the test set it will be automatically saved under `models/` with its corresponding *confusion matrix* under `results/`:
+The current **highest score** on the test set is **88.9%** using **Random Forest** (see `src/models/baseline.py`). After running the pipeline, if your model scores a higher accuracy on the test set it will be automatically saved under `models/` with its corresponding *confusion matrix* under `results/`:
 
 <p align="center">
-  <img src="results/Baseline_2025-09-16_23-19-15.png" width="400">
+  <img src="results/RandomForest_2025-09-21_14-58-35.png" width="400">
 </p>
