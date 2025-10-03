@@ -107,7 +107,6 @@ if X_train is not None:
         y="sensor_value",
         color='sensor_axis',
         title=f"Sensor Readings for {sensor_choice.title()}",
-        markers=True,
         labels={"Time (s)": "Time in Seconds", "sensor_value": "Sensor Value"}
     )
     

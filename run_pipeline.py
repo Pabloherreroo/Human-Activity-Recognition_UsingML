@@ -15,10 +15,10 @@ if __name__ == "__main__":
     data_path = TEST_CSV_DATA_PATH if args.test else CSV_DATA_PATH
     test_size = 1.0 if args.test else None
 
-    model_path = None if args.new_model else "models/RandomForest_2025-09-21_14-58-35.joblib"
+    model_path = None if args.new_model else "models/RandomForest_2025-10-03_11-35-07.joblib"
     
     data_loader = DataLoader(data_path)
     model = RandomForest()
     pipeline = Pipeline(data_loader, model)
-    confusion_matrix, model_path = pipeline.run_pipeline(model_path, test_size=test_size)
+    confusion_matrix, model_path = pipeline.run_pipeline(model_path, test_size=test_size, force_save=args.new_model)
     check_best(pipeline, confusion_matrix, model_path)

@@ -1,4 +1,7 @@
-from .config import CSV_DATA_PATH, PROCESSED_DATA_DIR, WINDOW_SIZE, STEP, TEST_SIZE, ALL_REQUIRED_COLUMNS, FEATURE_COLUMNS, LABEL_COLUMN
+try:
+    from .config import CSV_DATA_PATH, WINDOW_SIZE, STEP, TEST_SIZE, ALL_REQUIRED_COLUMNS, FEATURE_COLUMNS, LABEL_COLUMN
+except ImportError:
+    from config import CSV_DATA_PATH, WINDOW_SIZE, STEP, TEST_SIZE, ALL_REQUIRED_COLUMNS, FEATURE_COLUMNS, LABEL_COLUMN
 import pandas as pd
 import numpy as np
 import os
@@ -7,7 +10,6 @@ class DataLoader:
     def __init__(self, file_path):
         self.file_path = file_path
         self.data = None
-        # We are not loading data at init anymore
         
     def load_data(self):
         """Loads the dataset from the specified CSV file path."""
@@ -130,8 +132,6 @@ class DataLoader:
         print("Windowing complete")
         print(f"Training Set Shape (after windowing): {X_train.shape}")
         print(f"Test Set Shape (after windowing): {X_test.shape}")
-
-
 
         return X_train, X_test, y_train, y_test, labels, feature_names
             

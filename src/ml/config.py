@@ -7,8 +7,8 @@ TEST_CSV_DATA_PATH = "test_data/merged_data.csv"
 TEST_PROCESSED_DATA_DIR = "test_data/"
 TEST_OUTPUT_FILE = 'test_data/merged_data.csv'
 
-WINDOW_SIZE=20
-STEP=5
+WINDOW_SIZE=200
+STEP=50
 TEST_SIZE=0.2
 
 # Column definitions
