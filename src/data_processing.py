@@ -167,22 +167,13 @@ def merge_aggregated_csvs(data_dir, output_file):
             
             # Check if the CSV already has a 'label' column
             if 'label' in df.columns:
-                # For sitting-down folder, keep existing labels (sitting_down and standing_up)
-                if subdir.name == 'sitting-down':
-                    print(f"  - Keeping existing labels: {df['label'].unique()}")
-                else:
-                    # For other folders, replace with folder name if different
-                    expected_label = subdir.name.lower().replace('-', '_')
-                    if df['label'].iloc[0] != expected_label:
-                        df['label'] = expected_label
-                        print(f"  - Updated label to: {expected_label}")
-                    else:
-                        print(f"  - Label already correct: {expected_label}")
+                # If labels exist, keep them
+                print(f"  - Labels found in {subdir.name}, keeping them.")
             else:
                 # Add label column based on folder name
                 label = subdir.name.lower().replace('-', '_')
                 df['label'] = label
-                print(f"  - Added label: {label}")
+                print(f"  - Added label '{label}' from folder name.")
             
             print(f"  - Rows: {len(df)}")
             all_dataframes.append(df)
